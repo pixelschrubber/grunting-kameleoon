@@ -1,0 +1,27 @@
+{
+  "name": "grunting-kameleoon",
+  "version": "0.0.1",
+  "description": "Use the REST-API with the grunt task runner to automate your test environment",
+  "main": "index.js",
+  "scripts": {
+    "test": "list"
+  },
+  "keywords": [
+    "ab-test",
+    "personalization",
+    "rest"
+  ],
+  "author": "Ulf Mayer",
+  "license": "ISC",
+  "dependencies": {
+    "file": "^0.2.2",
+    "fs-extra": "^7.0.1",
+    "grunt": "^1.0.3",
+    "grunt-contrib-connect": "^2.0.0",
+    "js-stringify": "^1.0.2",
+    "lodash": "^4.17.11",
+    "path": "^0.12.7",
+    "rest": "^2.0.0",
+    "website-scraper": "^3.4.0"
+  }
+}
