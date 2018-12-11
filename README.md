@@ -1,21 +1,19 @@
-# grunting-kameleoon
-Making use of the kameleoon REST API in order to build a local test stack with deployment to kameleoon
+# Grunting Kameleoon
+Making use of the kameleoon REST API in order to build a local test stack with deployment to kameleoon. With this grunt taskrunner, you will be able to use the REST API of Kameleoon in order to automate your testworkflow.
 
-## Kameleoon Grunt
-With this grunt taskrunner, you will be able to use the REST API of Kameleoon in order to automate your testworkflow.
-
-Installation:
+## Installation:
 
 1. Checkout this repository
 2. npm install
 3. grunt
 4. Follow instructions
 
----
-
 ## Using the tasks
 
-You will need to add your Kameleoon credentials within the kameleoon-configuration.json file.
+You will need to add your Kameleoon credentials within the kameleoon-configuration.json file first.
+
+grunt
+- Default task will print some fancy ascii art, provided by @Blubbie - also thanks for inspiration and ideas!
 
 grunt authentication
 - Create the authentication token, which is valid for 1 hour. If you repeat within that timeframe, no new token should be created
@@ -26,6 +24,23 @@ grunt listSites
 
 grunt setSite
 - Set a site for the current setup, this will be saved into kameleoon-configuration automatically
+
+grunt listTests
+
+grunt previewLocalTest
+- not finished yet. Planned to start local server, with content from scrapeLocalTest
+
+deleteLocalTest
+- delete a local test, provide name as param
+
+deleteTest
+- delete a remote test, provide id as param
+
+updateTest
+- not finished yet, should be used to update an already deployed test
+
+experimentResults
+- not finsihed yet, should be used to get some basic stats
 
 grunt listLocalTests
 - This function will show all locally created tests (not the one, that are within the account)
@@ -46,4 +61,3 @@ grunt assignGoal
 
 grunt listGoals
 - Get a list of all goals associated to the selected site. grunt setSite must be called at least one time beforehand.
----
