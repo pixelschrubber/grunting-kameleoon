@@ -472,6 +472,40 @@ module.exports = function(grunt) {
       }
   });
 
+    // Simulate Test
+    grunt.registerTask('simulation', 'Generate Simulation URL', function () {
+      var done = this.async();
+      var testID = grunt.option('id');
+      if(testID !== undefined) {
+        var credentials = grunt.config.get('kameleoonConfiguration')
+        var auth = grunt.file.readJSON(credentials);
+
+        if(auth['siteCode'] !== undefined) {
+          var clientPath = 'sites/'+auth['siteCode']+'/experiments/'+testID+'/simulation';
+
+          client = rest.wrap(pathPrefix, {prefix: grunt.config.get('apiEndPoint')})
+          .wrap(mime, { mime: 'application/json'})
+          .wrap(defaultRequest, { headers: { 'X-Auth-Key': auth['token'], 'X-Auth-Email': auth['username']} })
+          .wrap(errorCode);
+
+          client({method: 'GET', path: clientPath}).then(function (response) {
+            if(response.entity.success) {
+              grunt.log.write('Simulation URL: '+response.entity.result.simulationURL+' ').ok();
+            }
+            done();
+          },
+          // error handling
+          function (response) {
+            grunt.log.error('An error occured');
+            grunt.log(response);
+            done();
+          });
+        }
+      } else {
+        grunt.log.error('Please provide an ID, for the test that should be simulated');
+      }
+    });
+
   // Login to Kameleoon
   grunt.registerTask('default', 'Default', function() {
     var kameleoon = "";
