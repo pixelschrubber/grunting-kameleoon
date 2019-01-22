@@ -257,11 +257,13 @@ module.exports = function(grunt) {
   // Update Variation of configured test
   grunt.registerTask('updateVariations', 'Update Variations of test', function () {
     var done = this.async();
+    var async = grunt.util.async;
 
     // updateVariations is being executed from deploy task, arguments must include testname
     if(arguments.length > 0) {
       var testID = arguments[0];
       //@todo: check consistency of variation and folder naming
+      //@todo: check if test exists, status is not ENDED, since method is used in updateTest
       var testPath = path.resolve('tests/'+testID+'/configuration.json');
       var testConfiguration = grunt.file.readJSON(testPath);
       var credentials = grunt.config.get('kameleoonConfiguration')
@@ -284,24 +286,24 @@ module.exports = function(grunt) {
         }
       });
 
-      for (var i = 0; i < variations.length; i++) {
-        var variation = path.resolve(target+"/"+variations[i]);
-        var cssCode = path.resolve(target+"/"+variations[i]+"/variation.css");
-        var jsCode = path.resolve(target+"/"+variations[i]+"/variation.js");
+      async.forEach(variations, function(singleVariation) {
+        var variation = path.resolve(target+"/"+singleVariation);
+        var cssCode = path.resolve(target+"/"+singleVariation+"/variation.css");
+        var jsCode = path.resolve(target+"/"+singleVariation+"/variation.js");
         var js = stringify(grunt.file.read(jsCode));
         var css = stringify(grunt.file.read(cssCode));
         //@todo: variation name
-        var data = JSON.parse('{"name": "variation 1", "jsCode": '+js+', "cssCode": '+css+'}');
+        var data = JSON.parse('{"name": "'+singleVariation+'", "jsCode": '+js+', "cssCode": '+css+'}');
         client({method: 'POST', path: clientPath, entity: data}).then(function (response) {
-          grunt.log.write('Variation created: '+response.entity.result.name+' '+response.entity.result.id+' ').ok();
-          done();
+          grunt.log.write('Variation: '+response.entity.result.name+' '+response.entity.result.id+' ').ok();
         },
         function (response) {
           grunt.log.error('An error occured');
           grunt.log(response);
-          done();
         });
-      }
+      }, function(error) {
+        done(!error);
+      });
     }
   });
 
@@ -427,10 +429,83 @@ module.exports = function(grunt) {
 
   // Update Test
   grunt.registerTask('updateTest', ' Update AB-Test', function () {
-    // Update from folder structure
-    // Check if already online, if not -> createtest
-    // maybe with flags? - Pause, Stop, Segment
-    grunt.log.write('Update an AB-Test ...').ok();
+    if(grunt.option('name') !== undefined) {
+      var done = this.async();
+      //@todo: name, status, deviations, segmentId
+      //@todo: maybe with flags? "status":"PAUSE" - Pause, Stop, Segment
+      //@todo: implement updateExperiment
+      //@todo: Check if already online, if not -> createtest
+      //@todo: check consistency of variation and folder naming
+      var testPath = path.resolve('tests/'+grunt.option('name')+'/configuration.json');
+      var testConfiguration = grunt.file.readJSON(testPath);
+      var testID = testConfiguration['id'];
+
+      var credentials = grunt.config.get('kameleoonConfiguration')
+      var auth = grunt.file.readJSON(credentials);
+
+      client = rest.wrap(pathPrefix, {prefix: grunt.config.get('apiEndPoint')})
+      .wrap(mime, { mime: 'application/json'})
+      .wrap(defaultRequest, { headers: { 'X-Auth-Key': auth['token'], 'X-Auth-Email': auth['username']} })
+      .wrap(errorCode);
+
+      if(auth['siteCode'] !== undefined) {
+        var clientPath = 'sites/'+auth['siteCode']+'/experiments/'+testID;
+        var data = JSON.parse('{"name":"'+testConfiguration["name"]+'"}');
+        client({method: 'PUT', path: clientPath, entity: data}).then(function (response) {
+          //@todo -update deviations here?
+          //console.log(response.entity.result.deviations);
+          testConfiguration['id'] = response.entity.result.id;
+          testConfiguration['status'] = response.entity.result.status;
+          grunt.file.write(testPath, JSON.stringify(testConfiguration, null, 2));
+          grunt.log.write('Test deployed: '+testConfiguration['id']+' ').ok();
+          grunt.task.run('updateVariations:'+grunt.option('name'));
+          done();
+        },
+        // error handling
+        function (response) {
+          grunt.log.error('An error occured');
+          grunt.log(response);
+          done();
+        });
+      } else {
+        grunt.log.write('Please run setSite first').ok();
+      }
+      grunt.log.write('Update an AB-Test ...').ok();
+    }
+  });
+
+  // Simulate Test
+  grunt.registerTask('simulation', 'Generate Simulation URL', function () {
+    var done = this.async();
+    var testID = grunt.option('id');
+    if(testID !== undefined) {
+      var credentials = grunt.config.get('kameleoonConfiguration')
+      var auth = grunt.file.readJSON(credentials);
+
+      if(auth['siteCode'] !== undefined) {
+        var clientPath = 'sites/'+auth['siteCode']+'/experiments/'+testID+'/simulation';
+
+        client = rest.wrap(pathPrefix, {prefix: grunt.config.get('apiEndPoint')})
+        .wrap(mime, { mime: 'application/json'})
+        .wrap(defaultRequest, { headers: { 'X-Auth-Key': auth['token'], 'X-Auth-Email': auth['username']} })
+        .wrap(errorCode);
+
+        client({method: 'GET', path: clientPath}).then(function (response) {
+          if(response.entity.success) {
+            grunt.log.write('Simulation URL: '+response.entity.result.simulationURL+' ').ok();
+          }
+          done();
+        },
+        // error handling
+        function (response) {
+          grunt.log.error('An error occured');
+          grunt.log(response);
+          done();
+        });
+      }
+    } else {
+      grunt.log.error('Please provide an ID, for the test that should be simulated');
+    }
   });
 
   // Experiment Results
@@ -471,40 +546,6 @@ module.exports = function(grunt) {
         grunt.log.error('Please provide a test ID, for your results - maybe use grunt listTests before?');
       }
   });
-
-    // Simulate Test
-    grunt.registerTask('simulation', 'Generate Simulation URL', function () {
-      var done = this.async();
-      var testID = grunt.option('id');
-      if(testID !== undefined) {
-        var credentials = grunt.config.get('kameleoonConfiguration')
-        var auth = grunt.file.readJSON(credentials);
-
-        if(auth['siteCode'] !== undefined) {
-          var clientPath = 'sites/'+auth['siteCode']+'/experiments/'+testID+'/simulation';
-
-          client = rest.wrap(pathPrefix, {prefix: grunt.config.get('apiEndPoint')})
-          .wrap(mime, { mime: 'application/json'})
-          .wrap(defaultRequest, { headers: { 'X-Auth-Key': auth['token'], 'X-Auth-Email': auth['username']} })
-          .wrap(errorCode);
-
-          client({method: 'GET', path: clientPath}).then(function (response) {
-            if(response.entity.success) {
-              grunt.log.write('Simulation URL: '+response.entity.result.simulationURL+' ').ok();
-            }
-            done();
-          },
-          // error handling
-          function (response) {
-            grunt.log.error('An error occured');
-            grunt.log(response);
-            done();
-          });
-        }
-      } else {
-        grunt.log.error('Please provide an ID, for the test that should be simulated');
-      }
-    });
 
   // Login to Kameleoon
   grunt.registerTask('default', 'Default', function() {
