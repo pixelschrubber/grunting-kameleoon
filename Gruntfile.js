@@ -97,9 +97,12 @@ module.exports = function(grunt) {
     if(grunt.option('site') !== undefined) {
       auth['siteCode'] = grunt.option('site');
       grunt.file.write(credentials, JSON.stringify(auth, null, 2));
+      grunt.log.write('Set Site '+grunt.option('site')+'...').ok();
+      done();
+    } else {
+      grunt.log.warn('Please define id of the site like --site=12345');
+      done();
     }
-
-    grunt.log.write('Set Site ...').ok();
   });
 
   // Create a new Test
