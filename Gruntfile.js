@@ -1,5 +1,5 @@
 module.exports = function(grunt) {
-  var _, rest, mime, pathPrefix, errorCode, client, fse, file, path, scrape, stringify;
+  var _, rest, mime, pathPrefix, errorCode, client, fse, file, path, scrape, stringify, fsc, StaticServer;
   rest = require('rest');
   mime = require('rest/interceptor/mime');
   defaultRequest = require('rest/interceptor/defaultRequest');
@@ -11,6 +11,8 @@ module.exports = function(grunt) {
   file = require("file");
   _ = require('lodash');
   stringify = require('js-stringify');
+  fsc = require("fs-cheerio");
+  StaticServer = require('static-server');
 
   //@todo: configure test, (optional) start local test, start and stop test, deploy test
   grunt.initConfig({
@@ -133,6 +135,10 @@ module.exports = function(grunt) {
       };
       scrape(options).then((result) => {
         grunt.log.write('Scraped...').ok();
+
+        // Create variations
+        grunt.task.run('injectTestAssets:'+grunt.option('name'));
+
         done();
       }).catch((err) => {
         grunt.log.error(err);
@@ -143,6 +149,25 @@ module.exports = function(grunt) {
 
     }
     grunt.log.write('AB-Test configured ...').ok();
+  });
+
+  // Inject the test js and css and create variations
+  grunt.registerTask('injectTestAssets', 'Inject the test js and css into the scraped content', function() {
+    if(grunt.option('name') !== undefined) {
+      var done = this.async();
+
+      testData = path.resolve('tests')+'/'+grunt.option('name');
+      targetFolder = path.resolve('target')+'/'+grunt.option('name');
+      targetData = path.resolve('target')+'/'+grunt.option('name')+'/index.html';
+
+      (async function(){
+        let $ = await fsc.readFile(targetData);
+        //@todo: for each variation read the files and write a new variation file, keep the original
+        $("head").append('<script>console.log("here");</script>');
+        await fsc.writeFile(targetFolder + "/example.html", $);
+        done();
+      })();
+    }
   });
 
   // List all local A/B Tests
@@ -204,11 +229,30 @@ module.exports = function(grunt) {
     });
 
 
-  // Preview local test
-  grunt.registerTask('previewLocalTest', 'Preview local AB-Test', function () {
-    // Start local server, show files from local file structure and scraped content
+    // Preview local test
+    grunt.registerTask('previewLocalTest', 'Preview local AB-Test', function () {
+      if(grunt.option('name') !== undefined) {
+        var rootPath = path.resolve('target/'+grunt.option('name'));
+        var done = this.async();
+        // Start local server, show files from local file structure and scraped content
+        //@todo: Start browser, call variation files
+        var server = new StaticServer({
+          rootPath: rootPath,
+          port: 1337,
+          name: 'ab-local-test',
+          cors: '*',
+          followSymlink: true,
+          templates: {
+            index: 'index.html',
+          }
+        });
 
-  });
+        server.start(function () {
+          console.log('Server listening to', server.port);
+
+        });
+      }
+    });
 
   // Publish a previously created Test
   grunt.registerTask('deployTest', 'Deploy an AB-Test', function (name) {
@@ -451,6 +495,7 @@ module.exports = function(grunt) {
       .wrap(defaultRequest, { headers: { 'X-Auth-Key': auth['token'], 'X-Auth-Email': auth['username']} })
       .wrap(errorCode);
 
+      //@todo: Add css and js sitespecific to this call
       if(auth['siteCode'] !== undefined) {
         var clientPath = 'sites/'+auth['siteCode']+'/experiments/'+testID;
         var data = JSON.parse('{"name":"'+testConfiguration["name"]+'"}');
