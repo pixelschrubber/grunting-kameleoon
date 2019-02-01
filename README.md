@@ -26,7 +26,7 @@ You will need to add your Kameleoon credentials within the kameleoon-configurati
 - Set a site for the current setup, this will be saved into kameleoon-configuration automatically
 
 `grunt previewLocalTest`
-- Almost finished. Start a local server, with content from scrapeLocalTest
+- Start a local server, with content from scrapeLocalTest, usually index.html and variation-0.html - will listen to localhost:1337
 
 `injectTestAssets`
 - This task is being called by scrapeLocalTest in order to insert js and css for the local preview and generating the variations as static files
@@ -38,7 +38,7 @@ You will need to add your Kameleoon credentials within the kameleoon-configurati
 - delete a remote test, provide id as param
 
 `updateTest`
-- not finished yet, should be used to update an already deployed test
+- this task is being used to update an already deployed test
 
 `experimentResults`
 - not finished yet, should be used to get some basic stats
