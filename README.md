@@ -13,7 +13,7 @@ Making use of the kameleoon REST API in order to build a local test stack with d
 You will need to add your Kameleoon credentials within the kameleoon-configuration.json file first.
 
 `grunt`
-- Default task will print some fancy ascii art, provided by @Blubbie - also thanks for inspiration and ideas!
+- Default task will print some fancy ascii art, provided by [Henry Münster](https://github.com/Blubbie) - also thanks for inspiration and ideas!
 
 `grunt authentication`
 - Create the authentication token, which is valid for 1 hour. If you repeat within that timeframe, no new token should be created
@@ -28,19 +28,19 @@ You will need to add your Kameleoon credentials within the kameleoon-configurati
 `grunt previewLocalTest`
 - Start a local server, with content from scrapeLocalTest, usually index.html and variation-0.html - will listen to localhost:1337
 
-`injectTestAssets`
+`grunt injectTestAssets`
 - This task is being called by scrapeLocalTest in order to insert js and css for the local preview and generating the variations as static files
 
-`deleteLocalTest`
+`grunt deleteLocalTest`
 - delete a local test, provide name as param
 
-`deleteTest`
+`grunt deleteTest`
 - delete a remote test, provide id as param
 
-`updateTest`
+`grunt updateTest`
 - this task is being used to update an already deployed test
 
-`experimentResults`
+`grunt experimentResults`
 - not finished yet, should be used to get some basic stats
 
 `grunt listLocalTests`
