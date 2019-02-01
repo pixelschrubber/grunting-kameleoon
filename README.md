@@ -26,7 +26,10 @@ You will need to add your Kameleoon credentials within the kameleoon-configurati
 - Set a site for the current setup, this will be saved into kameleoon-configuration automatically
 
 `grunt previewLocalTest`
-- not finished yet. Planned to start local server, with content from scrapeLocalTest
+- Almost finished. Start a local server, with content from scrapeLocalTest
+
+`injectTestAssets`
+- This task is being called by scrapeLocalTest in order to insert js and css for the local preview and generating the variations as static files
 
 `deleteLocalTest`
 - delete a local test, provide name as param
@@ -38,11 +41,11 @@ You will need to add your Kameleoon credentials within the kameleoon-configurati
 - not finished yet, should be used to update an already deployed test
 
 `experimentResults`
-- not finsihed yet, should be used to get some basic stats
+- not finished yet, should be used to get some basic stats
 
 `grunt listLocalTests`
 - This function will show all locally created tests (not the one, that are within the account)
-x
+
 `grunt createLocalTest`
 - This function will create a new test from a template, which is in the folder /template/
 - Option --name is mandatory, the name will be used to set up a new folder under the /template/ folder

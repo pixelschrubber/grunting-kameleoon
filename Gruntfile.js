@@ -1,5 +1,5 @@
 module.exports = function(grunt) {
-  var _, rest, mime, pathPrefix, errorCode, client, fse, file, path, scrape, stringify, fsc, StaticServer;
+  var _, rest, mime, pathPrefix, errorCode, client, fse, file, path, scrape, stringify, fsc, StaticServer, async;
   rest = require('rest');
   mime = require('rest/interceptor/mime');
   defaultRequest = require('rest/interceptor/defaultRequest');
@@ -13,6 +13,8 @@ module.exports = function(grunt) {
   stringify = require('js-stringify');
   fsc = require("fs-cheerio");
   StaticServer = require('static-server');
+  async = grunt.util.async;
+
 
   //@todo: configure test, (optional) start local test, start and stop test, deploy test
   grunt.initConfig({
@@ -156,17 +158,39 @@ module.exports = function(grunt) {
     if(grunt.option('name') !== undefined) {
       var done = this.async();
 
-      testData = path.resolve('tests')+'/'+grunt.option('name');
-      targetFolder = path.resolve('target')+'/'+grunt.option('name');
-      targetData = path.resolve('target')+'/'+grunt.option('name')+'/index.html';
+      var target = path.resolve('tests')+'/'+grunt.option('name');
+      var variations = [];
 
-      (async function(){
-        let $ = await fsc.readFile(targetData);
-        //@todo: for each variation read the files and write a new variation file, keep the original
-        $("head").append('<script>console.log("here");</script>');
-        await fsc.writeFile(targetFolder + "/example.html", $);
-        done();
-      })();
+      file.walkSync(target, function(callback) {
+        var reg = new RegExp('variation-\\d+$');
+        if(reg.test(callback)) {
+          var testName = path.parse(callback);
+          variations.push(testName.name);
+        }
+      });
+
+      async.forEach(variations, function(singleVariation) {
+        var variation = path.resolve(target+"/"+singleVariation);
+        var cssCode = path.resolve(target+"/"+singleVariation+"/variation.css");
+        var jsCode = path.resolve(target+"/"+singleVariation+"/variation.js");
+
+        var targetFolder = path.resolve('target')+'/'+grunt.option('name');
+        var targetData = path.resolve('target')+'/'+grunt.option('name')+'/index.html';
+
+        //@todo: check if folder exists, when being called without scrapeLocalTest
+          (async function(){
+            let $ = await fsc.readFile(targetData);
+            var js = grunt.file.read(jsCode);
+            var css = grunt.file.read(cssCode);
+            $("head").append('<script type="text/javascript" data-origin="grunting-kameleoon">'+js+'</script>');
+            $("head").append('<style type="text/css" data-origin="grunting-kameleoon">'+css+'</style>');
+            await fsc.writeFile(targetFolder +"/"+ singleVariation+".html", $);
+            done();
+          })();
+
+      }, function(error) {
+        done(!error);
+      });
     }
   });
 
@@ -235,6 +259,7 @@ module.exports = function(grunt) {
         var rootPath = path.resolve('target/'+grunt.option('name'));
         var done = this.async();
         // Start local server, show files from local file structure and scraped content
+        // @walk through directory and get all generated variations
         //@todo: Start browser, call variation files
         var server = new StaticServer({
           rootPath: rootPath,
@@ -272,6 +297,7 @@ module.exports = function(grunt) {
 
       if(auth['siteCode'] !== undefined) {
         var clientPath = 'sites/'+auth['siteCode']+'/experiments';
+        //@todo: add testspecific data to test
         var data = JSON.parse('{"name":"'+testConfiguration["name"]+'"}');
         client({method: 'POST', path: clientPath, entity: data}).then(function (response) {
           if(testConfiguration['id']) {
@@ -304,7 +330,6 @@ module.exports = function(grunt) {
   // Update Variation of configured test
   grunt.registerTask('updateVariations', 'Update Variations of test', function () {
     var done = this.async();
-    var async = grunt.util.async;
 
     // updateVariations is being executed from deploy task, arguments must include testname
     if(arguments.length > 0) {
