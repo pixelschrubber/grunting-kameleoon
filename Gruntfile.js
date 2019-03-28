@@ -602,9 +602,12 @@ module.exports = function(grunt) {
           .wrap(errorCode);
 
           client({method: 'GET', path: clientPath}).then(function (response) {
-            //@todo: Get experiments results not finished
-            // Some basic results, winner version
-            console.log(response.entity);
+            // Some basic results for the goals in the test
+            async.forEach(response.entity.result.goals, function(singleGoal) {
+              console.log(singleGoal);
+            }, function(error) {
+              done(!error);
+            });
             grunt.log.write('Get results for an experiment ...').ok();
             done();
           },
@@ -616,7 +619,7 @@ module.exports = function(grunt) {
           });
         }
       } else {
-        grunt.log.error('Please provide a test ID, for your results - maybe use grunt listTests before?');
+        grunt.log.error('Please provide a test ID withg the param --id=xxxxx, for your results - maybe use grunt listTests before?');
       }
   });
 
