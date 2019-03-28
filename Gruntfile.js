@@ -36,9 +36,9 @@ module.exports = function(grunt) {
     var credentials = grunt.config.get('kameleoonConfiguration')
     var auth = grunt.file.readJSON(credentials);
     var currentTime = new Date().getTime();
-    var timeLimit = new Date(auth['timestamp']).getTime();
+    var timeLimit = new Date((auth['timestamp'] + (1*3600*1000))).getTime();
 
-    if(currentTime >= timeLimit) {
+    if(auth['timestamp'] === '' || currentTime >= timeLimit) {
       client = rest.wrap(pathPrefix, {prefix: grunt.config.get('apiEndPoint')})
       .wrap(mime, { mime: 'application/json' })
       .wrap(errorCode);
