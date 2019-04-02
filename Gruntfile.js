@@ -259,7 +259,6 @@ module.exports = function(grunt) {
         var rootPath = path.resolve('target/'+grunt.option('name'));
         var done = this.async();
         // Start local server, show files from local file structure and scraped content
-        // @walk through directory and get all generated variations
         //@todo: Start browser, call variation files
         var server = new StaticServer({
           rootPath: rootPath,
@@ -274,7 +273,16 @@ module.exports = function(grunt) {
 
         server.start(function () {
           console.log('Server listening to', server.port);
-
+          var target = path.resolve('target')+'/'+grunt.option('name');
+          fse.readdir(target, function(err, files) {
+            async.forEach(files, function(singleVariation) {
+              var reg = new RegExp('\.html');
+              if(reg.test(singleVariation)) {
+                console.log('Open http://localhost:'+server.port+'/'+singleVariation);
+              }
+              }, function(error) {
+            });
+          });
         });
       }
     });
