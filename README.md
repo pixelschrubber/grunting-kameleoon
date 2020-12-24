@@ -1,3 +1,6 @@
+This repository makes use of a deprecated REST API. Please use the updated repo from here: https://github.com/Kameleoon/dev-template
+
+
 # Grunting Kameleoon
 Making use of the kameleoon REST API in order to build a local test stack with deployment to kameleoon. With this grunt taskrunner, you will be able to use the REST API of Kameleoon in order to automate your testworkflow.
 
